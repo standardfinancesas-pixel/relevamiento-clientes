@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standard Finance — Formulario Budget de Negocio</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: #dde3ec;
+    --border-focus: #3b82f6;
+    --accent: #1d4ed8;
+    --accent-light: #eff6ff;
+    --accent2: #0ea5e9;
+    --success: #10b981;
+    --success-light: #ecfdf5;
+    --text: #1e293b;
+    --text-mid: #475569;
+    --text-muted: #94a3b8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #0ea5e9 100%);
+    padding: 40px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    pointer-events: none;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .brand-logo {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+
+  .brand-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.5px;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.85);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    max-width: 500px;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38bdf8, #a5f3fc);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .progress-txt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.6);
+    min-width: 44px;
+    text-align: right;
+  }
+
+  /* TABS */
+  .tabs-wrap {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    box-shadow: var(--shadow);
+  }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 15px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { color: var(--text-mid); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab.done { color: var(--success); border-bottom-color: var(--success); }
+  .tab .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .tab.done .dot { opacity: 1; }
+
+  /* MAIN */
+  .main {
+    max-width: 720px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 16px;
+  }
+
+  .section-block { display: none; animation: fadeUp 0.3s ease; }
+  .section-block.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sec-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .icon-blue { background: var(--accent-light); }
+  .icon-green { background: #f0fdf4; }
+  .icon-purple { background: #faf5ff; }
+  .icon-orange { background: #fff7ed; }
+
+  .sec-title h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .sec-title p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  /* FIELDS */
+  .sub-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 24px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field { margin-bottom: 18px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-mid);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .field label .req { color: #ef4444; margin-left: 3px; }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 11px 14px;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    background: #fff;
+  }
+
+  .field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+  .field select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  .field select option { background: #fff; }
+  .field-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) {
+    .row2 { grid-template-columns: 1fr; }
+    .main { padding: 0 12px; }
+    .card { padding: 20px; }
+    .tabs-wrap { padding: 0 12px; }
+    .header { padding: 28px 20px 24px; }
+  }
+
+  /* OPTION CARDS */
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; margin-top: 6px; }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-mid);
+    transition: all 0.15s;
+    background: var(--surface2);
+    user-select: none;
+  }
+  .opt:hover { border-color: var(--border-focus); color: var(--text); background: var(--accent-light); }
+  .opt.sel { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+  .opt input { width: 14px; height: 14px; accent-color: var(--accent); flex-shrink: 0; margin: 0; padding: 0; }
+
+  /* INFO BOX */
+  .info-box {
+    display: flex;
+    gap: 10px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: #1e40af;
+    line-height: 1.5;
+  }
+  .info-box .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* NAV BUTTONS */
+  .nav-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-back {
+    padding: 11px 22px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-mid);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-back:hover { border-color: var(--text-mid); color: var(--text); }
+
+  .btn-fwd {
+    margin-left: auto;
+    padding: 11px 28px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-fwd:hover { background: #1e40af; }
+
+  /* SUCCESS */
+  .success-wrap {
+    display: none;
+    padding: 20px;
+    max-width: 720px;
+    margin: 32px auto;
+    animation: fadeUp 0.4s ease;
+  }
+  .success-wrap.active { display: block; }
+
+  .success-card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    padding: 48px 40px;
+    text-align: center;
+  }
+
+  .check-circle {
+    width: 72px; height: 72px;
+    background: var(--success-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 24px;
+  }
+
+  .success-card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .success-card p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 380px;
+    margin: 0 auto 32px;
+  }
+
+  .export-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .btn-export {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+  }
+
+  .btn-xlsx {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  .btn-xlsx:hover { background: #bbf7d0; }
+
+  .btn-pdf {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+  .btn-pdf:hover { background: #fecaca; }
+
+  .summary-grid {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: left;
+    max-width: 520px;
+    margin: 0 auto 24px;
+  }
+
+  .summary-grid h3 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .sum-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .sum-key {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 150px;
+    flex-shrink: 0;
+    padding-top: 1px;
+    letter-spacing: 0.3px;
+  }
+
+  .sum-val {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .btn-restart {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-restart:hover { border-color: var(--text-mid); color: var(--text); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px 20px 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="brand-row">
+    <div class="brand-logo">SF</div>
+    <div>
+      <div class="brand-name">Standard Finance</div>
+      <div class="brand-sub">Consultoría de Negocios</div>
+    </div>
+  </div>
+  <div class="header-badge">Relevamiento Inicial</div>
+  <h1>Formulario Budget<br>de Negocio</h1>
+  <p class="header-desc">Completá este formulario antes de nuestra próxima reunión. Toda la información que compartís nos permite preparar un diagnóstico preciso y sin pérdida de tiempo.</p>
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-txt" id="progressTxt">0 / 4</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tab active" data-sec="0"><span class="dot"></span>💰 Costos</div>
+  <div class="tab" data-sec="1"><span class="dot"></span>🏠 Finanzas</div>
+  <div class="tab" data-sec="2"><span class="dot"></span>🛒 E-Commerce</div>
+  <div class="tab" data-sec="3"><span class="dot"></span>📦 Mercado Libre</div>
+</div>
+
+<!-- MAIN FORM -->
+<div class="main" id="mainForm">
+
+  <!-- SECCIÓN 1: COSTOS -->
+  <div class="section-block active" id="sec-0">
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-icon icon-blue">💰</div>
+        <div class="sec-title">
+          <h2>Costos y Rentabilidad</h2>
+          <p>Estructura de gastos e importación para calcular márgenes reales.</p>
+        </div>
+      </div>
+
+      <div class="sub-label">Costos Fijos Mensuales</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Alquiler del local <span class="req">*</span></label>
+          <input type="number" id="alquiler" placeholder="$ 0" />
+        </div>
+        <div class="field">
+          <label>Sueldos totales (empleados)</label>
+          <input type="number" id="sueldos" placeholder="$ 0" />
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Servicios (luz, internet, tel.)</label>
+          <input type="number" id="servicios" placeholder="$ 0" />
+        </div>
+        <div class="field">
+          <label>Cuotas / préstamos</label>
+          <input type="number" id="prestamos" placeholder="$ 0" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Otros costos fijos</label>
+        <textarea id="otrosFijos" placeholder="Ej: contador, sistema de gestión, seguro..."></textarea>
+      </div>
+
+      <div class="sub-label">Última Importación</div>
+
+      <div class="info-box">
+        <span class="icon">⚡</span>
+        <span>Con estos 3 datos calculamos el <strong>costo unitario real</strong> y lo comparamos con China.</span>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Precio de compra en origen <span class="req">*</span></label>
+          <input type="number" id="precioOrigen" placeholder="0" />
+        </div>
+        <div class="field">
+          <label>Moneda de compra</label>
+          <select id="moneda">
+            <option value="">Seleccioná</option>
+            <option value="USD">Dólares (USD)</option>
+            <option value="BRL">Reales (BRL)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Flete internacional</label>
+          <input type="number" id="flete" placeholder="$ 0" />
+        </div>
+        <div class="field">
+          <label>Aduana + impuestos</label>
+          <input type="number" id="aduana" placeholder="$ 0" />
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Despachante de aduana</label>
+          <input type="number" id="despachante" placeholder="$ 0" />
+        </div>
+        <div class="field">
+          <label>Total unidades importadas <span class="req">*</span></label>
+          <input type="number" id="unidades" placeholder="Cantidad de prendas/pares" />
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Precio promedio de venta <span class="req">*</span></label>
+          <input type="number" id="precioVenta" placeholder="$ 0 (al público, en pesos)" />
+        </div>
+        <div class="field">
+          <label>Facturación mensual promedio</label>
+          <input type="number" id="facturacion" placeholder="$ 0 (últimos 3-6 meses)" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Cómo fijás los precios hoy?</label>
+        <div class="opts" id="preciosOpts">
+          <label class="opt"><input type="radio" name="precios" value="intuicion"> Intuición</label>
+          <label class="opt"><input type="radio" name="precios" value="markup"> Markup fijo</label>
+          <label class="opt"><input type="radio" name="precios" value="competencia"> Competencia</label>
+          <label class="opt"><input type="radio" name="precios" value="mixto"> Combinado</label>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-fwd" onclick="goTo(0,1)">Siguiente: Finanzas →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: FINANZAS -->
+  <div class="section-block" id="sec-1">
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-icon icon-green">🏠</div>
+        <div class="sec-title">
+          <h2>Finanzas y Orden</h2>
+          <p>Separar las finanzas personales del negocio es clave para conocer la rentabilidad real.</p>
+        </div>
+      </div>
+
+      <div class="sub-label">Retiros y Gastos Personales</div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Retiro mensual de los dueños <span class="req">*</span></label>
+          <input type="number" id="retiro" placeholder="$ 0 (total entre socios)" />
+        </div>
+        <div class="field">
+          <label>¿Ese retiro está registrado?</label>
+          <select id="retiroReg">
+            <option value="">Seleccioná</option>
+            <option value="si">Sí, registrado</option>
+            <option value="caja">Sale de caja sin registrar</option>
+            <option value="aveces">A veces</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Pagás gastos personales con cuenta/tarjeta del negocio?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="mezcla" value="nunca"> Nunca</label>
+          <label class="opt"><input type="radio" name="mezcla" value="aveces"> A veces</label>
+          <label class="opt"><input type="radio" name="mezcla" value="seguido"> Seguido</label>
+          <label class="opt"><input type="radio" name="mezcla" value="siempre"> Siempre</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Tienen cuenta bancaria separada para el negocio?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="cuentaSep" value="si"> Sí, separada</label>
+          <label class="opt"><input type="radio" name="cuentaSep" value="no"> No, todo junto</label>
+        </div>
+      </div>
+
+      <div class="sub-label">Gestión y Administración</div>
+
+      <div class="field">
+        <label>¿Cómo manejás la administración hoy?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="admin" value="papel"> Papel / cuaderno</label>
+          <label class="opt"><input type="radio" name="admin" value="excel"> Excel / planilla</label>
+          <label class="opt"><input type="radio" name="admin" value="sistema"> Sistema de gestión</label>
+          <label class="opt"><input type="radio" name="admin" value="nada"> Sin registro</label>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Régimen AFIP</label>
+          <select id="afip">
+            <option value="">Seleccioná</option>
+            <option value="monotributo">Monotributo</option>
+            <option value="ri">Responsable Inscripto</option>
+            <option value="no_se">No sé</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Tienen contador o asesor?</label>
+          <div class="opts" style="margin-top:6px">
+            <label class="opt"><input type="radio" name="contador" value="si"> Sí</label>
+            <label class="opt"><input type="radio" name="contador" value="externo"> Externo</label>
+            <label class="opt"><input type="radio" name="contador" value="no"> No</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(1,0)">← Volver</button>
+        <button class="btn-fwd" onclick="goTo(1,2)">Siguiente: E-Commerce →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: E-COMMERCE -->
+  <div class="section-block" id="sec-2">
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-icon icon-purple">🛒</div>
+        <div class="sec-title">
+          <h2>E-Commerce</h2>
+          <p>Punto de partida digital para armar la estrategia de venta online a todo el país.</p>
+        </div>
+      </div>
+
+      <div class="sub-label">Presencia Digital Actual</div>
+
+      <div class="field">
+        <label>¿Tienen tienda online o web?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="tienda" value="si_activa"> Sí, activa y vendiendo</label>
+          <label class="opt"><input type="radio" name="tienda" value="si_sin_ventas"> Sí, sin ventas</label>
+          <label class="opt"><input type="radio" name="tienda" value="no"> No tenemos</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>URL de la tienda / web (si tienen)</label>
+        <input type="text" id="urlTienda" placeholder="https://..." />
+      </div>
+
+      <div class="field">
+        <label>¿Qué redes sociales usan?</label>
+        <div class="opts">
+          <label class="opt"><input type="checkbox" name="redes" value="instagram"> Instagram</label>
+          <label class="opt"><input type="checkbox" name="redes" value="facebook"> Facebook</label>
+          <label class="opt"><input type="checkbox" name="redes" value="tiktok"> TikTok</label>
+          <label class="opt"><input type="checkbox" name="redes" value="whatsapp"> WhatsApp Biz</label>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Seguidores en Instagram (aprox.)</label>
+          <select id="seguidores">
+            <option value="">Seleccioná</option>
+            <option value="menos1k">Menos de 1.000</option>
+            <option value="1k5k">1.000 – 5.000</option>
+            <option value="5k10k">5.000 – 10.000</option>
+            <option value="mas10k">Más de 10.000</option>
+            <option value="no_tengo">Sin Instagram</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Venden por redes / WhatsApp hoy?</label>
+          <select id="ventaRedes">
+            <option value="">Seleccioná</option>
+            <option value="si_mucho">Sí, bastante</option>
+            <option value="si_poco">Algo esporádico</option>
+            <option value="no">No vendemos por redes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-label">Operación y Stock</div>
+
+      <div class="field">
+        <label>¿Tienen fotos profesionales de los productos?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="fotos" value="si"> Sí, buenas fotos</label>
+          <label class="opt"><input type="radio" name="fotos" value="algunas"> Algunas</label>
+          <label class="opt"><input type="radio" name="fotos" value="no"> Solo celular</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Cómo manejan el stock?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="stock" value="sistema"> Sistema</label>
+          <label class="opt"><input type="radio" name="stock" value="excel"> Excel</label>
+          <label class="opt"><input type="radio" name="stock" value="memoria"> De memoria</label>
+          <label class="opt"><input type="radio" name="stock" value="no"> Sin control</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Tienen sistema para envíos a todo el país?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="envios" value="si"> Sí (OCA, Correo, etc.)</label>
+          <label class="opt"><input type="radio" name="envios" value="no_pero"> No, pero lo haríamos</label>
+          <label class="opt"><input type="radio" name="envios" value="no"> Solo vendemos local</label>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(2,1)">← Volver</button>
+        <button class="btn-fwd" onclick="goTo(2,3)">Siguiente: Mercado Libre →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4: MERCADO LIBRE -->
+  <div class="section-block" id="sec-3">
+    <div class="card">
+      <div class="sec-header">
+        <div class="sec-icon icon-orange">📦</div>
+        <div class="sec-title">
+          <h2>Mercado Libre</h2>
+          <p>Estado actual de la cuenta para planificar el crecimiento como vendedor profesional.</p>
+        </div>
+      </div>
+
+      <div class="sub-label">Estado de la Cuenta</div>
+
+      <div class="field">
+        <label>¿Tienen cuenta en Mercado Libre? <span class="req">*</span></label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="cuentaML" value="si_vendedor"> Sí, somos vendedores</label>
+          <label class="opt"><input type="radio" name="cuentaML" value="si_comprador"> Solo como compradores</label>
+          <label class="opt"><input type="radio" name="cuentaML" value="no"> No tenemos</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Reputación actual en ML</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="reputacion" value="verde"> 🟢 Verde (buena)</label>
+          <label class="opt"><input type="radio" name="reputacion" value="amarilla"> 🟡 Amarilla (regular)</label>
+          <label class="opt"><input type="radio" name="reputacion" value="roja"> 🔴 Roja (mala)</label>
+          <label class="opt"><input type="radio" name="reputacion" value="nueva"> Sin historial</label>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Publicaciones activas actualmente</label>
+          <select id="publicaciones">
+            <option value="">Seleccioná</option>
+            <option value="0">Ninguna</option>
+            <option value="menos10">Menos de 10</option>
+            <option value="10a50">10 – 50</option>
+            <option value="mas50">Más de 50</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ventas mensuales en ML (aprox.)</label>
+          <select id="ventasML">
+            <option value="">Seleccioná</option>
+            <option value="0">Ninguna todavía</option>
+            <option value="menos10">Menos de 10</option>
+            <option value="10a50">10 – 50</option>
+            <option value="mas50">Más de 50</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Conocen el programa Fulfillment de ML?</label>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="fulfillment" value="si_uso"> Sí, lo usamos</label>
+          <label class="opt"><input type="radio" name="fulfillment" value="si_conozco"> Lo conozco, no lo uso</label>
+          <label class="opt"><input type="radio" name="fulfillment" value="no"> No lo conozco</label>
+        </div>
+      </div>
+
+      <div class="sub-label">Observaciones</div>
+
+      <div class="field">
+        <label>¿Algo más que quieran compartir o consultar?</label>
+        <textarea id="observaciones" placeholder="Cualquier detalle del negocio que creas relevante para arrancar el trabajo juntos..."></textarea>
+      </div>
+
+      <div class="nav-btns">
+        <button class="btn-back" onclick="goTo(3,2)">← Volver</button>
+        <button class="btn-fwd" onclick="submitForm()" style="background:#10b981">Finalizar y ver resumen ✓</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- SUCCESS -->
+<div class="success-wrap" id="successWrap">
+  <div class="success-card">
+    <div class="check-circle">✅</div>
+    <h2>¡Formulario completado!</h2>
+    <p>Gracias por tomarte el tiempo de completar el relevamiento. Ahora podés descargar tu información para tenerla a mano en la reunión.</p>
+
+    <div class="export-buttons">
+      <button class="btn-export btn-xlsx" onclick="exportXLSX()">
+        📊 Descargar Excel (.xlsx)
+      </button>
+      <button class="btn-export btn-pdf" onclick="exportPDF()">
+        📄 Descargar PDF
+      </button>
+    </div>
+
+    <div class="summary-grid" id="summaryGrid">
+      <h3>Resumen del relevamiento</h3>
+    </div>
+
+    <button class="btn-restart" onclick="resetForm()">Completar de nuevo</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  © 2025 Standard Finance S.A.S — CUIT 33-719289369<br>
+  Todos los derechos reservados. Información confidencial de uso interno.
+</footer>
+
+<script>
+let current = 0;
+const total = 4;
+
+// Option card interactivity
+document.querySelectorAll('.opt input').forEach(inp => {
+  inp.addEventListener('change', () => {
+    if (inp.type === 'radio') {
+      document.querySelectorAll(`input[name="${inp.name}"]`).forEach(r => r.closest('.opt').classList.remove('sel'));
+      inp.closest('.opt').classList.add('sel');
+    } else {
+      inp.closest('.opt').classList.toggle('sel', inp.checked);
+    }
+  });
+});
+
+function updateUI() {
+  const pct = (current / total) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressTxt').textContent = current + ' / ' + total;
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.remove('active', 'done');
+    if (i === current) t.classList.add('active');
+    else if (i < current) t.classList.add('done');
+  });
+}
+
+function goTo(from, to) {
+  document.getElementById('sec-' + from).classList.remove('active');
+  current = to;
+  document.getElementById('sec-' + to).classList.add('active');
+  updateUI();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    const idx = parseInt(t.dataset.sec);
+    if (idx <= current) goTo(current, idx);
+  });
+});
+
+function v(id) { const e = document.getElementById(id); return e ? e.value.trim() : ''; }
+function radio(name) { const e = document.querySelector(`input[name="${name}"]:checked`); return e ? e.value : ''; }
+function checkboxes(name) {
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(e => e.value).join(', ') || '—';
+}
+function fmt(val) { return val ? '$ ' + Number(val).toLocaleString('es-AR') : '—'; }
+
+function collectData() {
+  return [
+    ['SECCIÓN', 'CAMPO', 'RESPUESTA'],
+    ['Costos Fijos', 'Alquiler del local', fmt(v('alquiler'))],
+    ['Costos Fijos', 'Sueldos totales', fmt(v('sueldos'))],
+    ['Costos Fijos', 'Servicios', fmt(v('servicios'))],
+    ['Costos Fijos', 'Cuotas / préstamos', fmt(v('prestamos'))],
+    ['Costos Fijos', 'Otros costos fijos', v('otrosFijos') || '—'],
+    ['Importación', 'Precio compra en origen', v('precioOrigen') ? v('moneda') + ' ' + Number(v('precioOrigen')).toLocaleString('es-AR') : '—'],
+    ['Importación', 'Flete internacional', fmt(v('flete'))],
+    ['Importación', 'Aduana + impuestos', fmt(v('aduana'))],
+    ['Importación', 'Despachante de aduana', fmt(v('despachante'))],
+    ['Importación', 'Total unidades importadas', v('unidades') || '—'],
+    ['Ventas', 'Precio promedio de venta', fmt(v('precioVenta'))],
+    ['Ventas', 'Facturación mensual promedio', fmt(v('facturacion'))],
+    ['Ventas', 'Cómo fija precios', radio('precios') || '—'],
+    ['Finanzas', 'Retiro mensual de dueños', fmt(v('retiro'))],
+    ['Finanzas', 'Retiro registrado', v('retiroReg') || '—'],
+    ['Finanzas', 'Gastos personales en cuenta negocio', radio('mezcla') || '—'],
+    ['Finanzas', 'Cuenta bancaria separada', radio('cuentaSep') || '—'],
+    ['Finanzas', 'Sistema de administración', radio('admin') || '—'],
+    ['Finanzas', 'Régimen AFIP', v('afip') || '—'],
+    ['Finanzas', 'Contador / asesor', radio('contador') || '—'],
+    ['E-Commerce', 'Tienda online', radio('tienda') || '—'],
+    ['E-Commerce', 'URL de la tienda', v('urlTienda') || '—'],
+    ['E-Commerce', 'Redes sociales', checkboxes('redes')],
+    ['E-Commerce', 'Seguidores Instagram', v('seguidores') || '—'],
+    ['E-Commerce', 'Ventas por redes', v('ventaRedes') || '—'],
+    ['E-Commerce', 'Fotos de productos', radio('fotos') || '—'],
+    ['E-Commerce', 'Control de stock', radio('stock') || '—'],
+    ['E-Commerce', 'Sistema de envíos', radio('envios') || '—'],
+    ['Mercado Libre', 'Cuenta ML', radio('cuentaML') || '—'],
+    ['Mercado Libre', 'Reputación ML', radio('reputacion') || '—'],
+    ['Mercado Libre', 'Publicaciones activas', v('publicaciones') || '—'],
+    ['Mercado Libre', 'Ventas mensuales ML', v('ventasML') || '—'],
+    ['Mercado Libre', 'Conoce Fulfillment ML', radio('fulfillment') || '—'],
+    ['Observaciones', 'Comentarios adicionales', v('observaciones') || '—'],
+  ];
+}
+
+function submitForm() {
+  const data = collectData();
+  // Build summary in UI
+  const grid = document.getElementById('summaryGrid');
+  grid.innerHTML = '<h3>Resumen del relevamiento</h3>';
+  const show = [
+    ['Alquiler', fmt(v('alquiler'))],
+    ['Facturación mensual', fmt(v('facturacion'))],
+    ['Precio venta promedio', fmt(v('precioVenta'))],
+    ['Retiro dueños', fmt(v('retiro'))],
+    ['Cuenta separada', radio('cuentaSep') === 'si' ? 'Sí ✓' : 'No'],
+    ['Sistema admin', radio('admin') || '—'],
+    ['Tienda online', radio('tienda') || '—'],
+    ['Cuenta ML', radio('cuentaML') || '—'],
+  ];
+  show.forEach(([k, val]) => {
+    if (val && val !== '—') {
+      grid.innerHTML += `<div class="sum-item"><span class="sum-key">${k}</span><span class="sum-val">${val}</span></div>`;
+    }
+  });
+
+  document.getElementById('mainForm').style.display = 'none';
+  document.querySelector('.tabs-wrap').style.display = 'none';
+  document.getElementById('successWrap').classList.add('active');
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressTxt').textContent = '4 / 4';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function exportXLSX() {
+  const data = collectData();
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+
+  // Column widths
+  ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 30 }];
+
+  // Style header row
+  const headerStyle = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '1D4ED8' } }, alignment: { horizontal: 'center' } };
+  ['A1', 'B1', 'C1'].forEach(cell => {
+    if (ws[cell]) ws[cell].s = headerStyle;
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Budget de Negocio');
+  XLSX.writeFile(wb, 'Standard_Finance_Budget_Negocio.xlsx');
+}
+
+function exportPDF() {
+  const data = collectData();
+  const fecha = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  let rows = data.slice(1).map(([sec, campo, resp]) =>
+    `<tr><td style="background:#f1f5f9;font-size:11px;color:#64748b;font-weight:600;padding:7px 12px;border:1px solid #e2e8f0;white-space:nowrap">${sec}</td><td style="padding:7px 12px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;color:#1e293b">${campo}</td><td style="padding:7px 12px;border:1px solid #e2e8f0;font-size:12px;color:#334155">${resp}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Budget de Negocio - Standard Finance</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #1e293b; }
+    .header { background: linear-gradient(135deg,#1e3a8a,#1d4ed8); color: white; padding: 28px 32px; border-radius: 12px; margin-bottom: 28px; }
+    .header h1 { font-size: 22px; margin: 0 0 4px; }
+    .header p { font-size: 12px; opacity: 0.75; margin: 0; }
+    .meta { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th { background: #1d4ed8; color: white; padding: 10px 12px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid #1d4ed8; text-align: left; }
+    footer { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+    @media print { body { padding: 16px; } }
+  </style></head><body>
+  <div class="header">
+    <h1>Standard Finance — Formulario Budget de Negocio</h1>
+    <p>Relevamiento inicial del cliente</p>
+    <div class="meta">Fecha: ${fecha}</div>
+  </div>
+  <table>
+    <tr><th>Sección</th><th>Campo</th><th>Respuesta</th></tr>
+    ${rows}
+  </table>
+  <footer>© 2025 Standard Finance S.A.S — CUIT 33-719289369 — Información confidencial</footer>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+}
+
+function resetForm() {
+  document.getElementById('mainForm').style.display = 'block';
+  document.querySelector('.tabs-wrap').style.display = 'flex';
+  document.getElementById('successWrap').classList.remove('active');
+  current = 0;
+  document.querySelectorAll('.section-block').forEach((s, i) => s.classList.toggle('active', i === 0));
+  updateUI();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+updateUI();
+</script>
+</body>
+</html>
