@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gastos Personales — Adrenalina</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #F7F5F2;
+    --surface: #FFFFFF;
+    --border: #E5E2DC;
+    --border-strong: #CCCAC4;
+    --text: #1A1916;
+    --text-secondary: #6B6860;
+    --text-tertiary: #9E9C96;
+    --accent: #1A1916;
+    --alvaro: #1D4E89;
+    --alvaro-bg: #EBF2FA;
+    --dani: #7B2D8B;
+    --dani-bg: #F5EBF9;
+    --familia: #1B6B3A;
+    --familia-bg: #E8F5EE;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-size: 15px;
+  }
+
+  .app { flex: 1; max-width: 520px; margin: 0 auto; width: 100%; padding: 1.25rem 1rem 2rem; }
+
+  .top-bar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 12px; }
+  .top-bar h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .top-bar .empresa { font-size: 12px; color: var(--text-secondary); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .mes-label { font-size: 12px; color: var(--text-tertiary); text-align: right; font-family: 'DM Mono', monospace; }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
+  .metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 0.75rem; }
+  .metric-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+  .metric-value { font-size: 15px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.875rem; }
+
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500; }
+  .field input, .field select {
+    width: 100%; padding: 9px 11px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); background: var(--bg);
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn-primary {
+    width: 100%; padding: 11px; border-radius: var(--radius-sm);
+    border: none; background: var(--accent); color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 4px; transition: opacity 0.15s;
+  }
+  .btn-primary:active { opacity: 0.85; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-item { background: var(--bg); border-radius: var(--radius-sm); padding: 0.75rem; }
+  .stat-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 3px; }
+  .stat-value { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+
+  .export-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+  .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0.875rem; }
+  .btn-export {
+    padding: 10px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); background: var(--bg);
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: background 0.15s;
+  }
+  .btn-export:active { opacity: 0.8; }
+  .btn-export svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .date-range { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .range-note { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; }
+
+  .filter-chip {
+    padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border-strong);
+    background: var(--surface); color: var(--text-secondary);
+    font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .filter-chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .mov-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mov-table th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+  .mov-table td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .mov-table tr:last-child td { border-bottom: none; }
+  .mov-table tr:hover td { background: var(--bg); }
+
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .quien-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; flex-shrink: 0; }
+  .monto-cell { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; text-align: right; white-space: nowrap; }
+  .btn-del { background: none; border: none; cursor: pointer; color: var(--text-tertiary); font-size: 16px; padding: 2px 4px; line-height: 1; }
+  .btn-del:hover { color: #C0392B; }
+  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-tertiary); font-size: 13px; }
+
+  .quien-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
+  .quien-btn { flex: 1; padding: 10px 6px; border: none; background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; text-align: center; }
+  .quien-btn.act-todos { background: var(--accent); color: #fff; }
+  .quien-btn.act-alvaro { background: var(--alvaro-bg); color: var(--alvaro); }
+  .quien-btn.act-dani { background: var(--dani-bg); color: var(--dani); }
+  .quien-btn.act-familia { background: var(--familia-bg); color: var(--familia); }
+
+  footer { text-align: center; padding: 1.5rem 1rem; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-tertiary); font-family: 'DM Mono', monospace; letter-spacing: 0.02em; background: var(--surface); }
+  footer span { display: block; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top-bar">
+    <div>
+      <h1>Gastos personales</h1>
+      <div class="empresa">Adrenalina Talles Especiales</div>
+    </div>
+    <div class="mes-label" id="mes-label"></div>
+  </div>
+
+  <div class="quien-toggle">
+    <button class="quien-btn act-todos" onclick="setQuien('todos',this)">Todos</button>
+    <button class="quien-btn" onclick="setQuien('Álvaro',this)">Álvaro</button>
+    <button class="quien-btn" onclick="setQuien('Dani',this)">Dani</button>
+    <button class="quien-btn" onclick="setQuien('Familia',this)">Familia</button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="metric"><div class="metric-label">Total acumulado</div><div class="metric-value" id="s-total">$0</div></div>
+    <div class="metric"><div class="metric-label">Efectivo</div><div class="metric-value" id="s-ef">$0</div></div>
+    <div class="metric"><div class="metric-label">Digital</div><div class="metric-value" id="s-dig">$0</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Nuevo movimiento</div>
+    <div class="grid-2">
+      <div class="field"><label>Fecha</label><input type="date" id="inp-fecha"></div>
+      <div class="field"><label>Quién</label>
+        <select id="inp-quien">
+          <option value="Álvaro">Álvaro</option>
+          <option value="Dani">Dani</option>
+          <option value="Familia">Familia</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Descripción</label><input type="text" id="inp-desc" placeholder="Ej: supermercado, colegio, nafta..."></div>
+    <div class="grid-2">
+      <div class="field"><label>Monto ($)</label><input type="number" id="inp-monto" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="inp-cat">
+          <option value="retiro">Retiro de caja</option>
+          <option value="hogar">Hogar</option>
+          <option value="educacion">Educación</option>
+          <option value="salud">Salud</option>
+          <option value="entretenimiento">Entretenimiento</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Método de retiro</label>
+      <select id="inp-medio">
+        <option value="efectivo">Efectivo en caja</option>
+        <option value="transferencia">Transferencia bancaria</option>
+        <option value="debito">Débito</option>
+        <option value="credito">Tarjeta de crédito</option>
+        <option value="mercadopago">Mercado Pago</option>
+        <option value="otro">Otro medio</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="agregar()">+ Agregar movimiento</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Estadísticas</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-label">Álvaro</div><div class="stat-value" id="st-alvaro">$0</div></div>
+      <div class="stat-item"><div class="stat-label">Dani</div><div class="stat-value" id="st-dani">$0</div></div>
+      <div class="stat-item"><div class="stat-label">Familia</div><div class="stat-value" id="st-familia">$0</div></div>
+      <div class="stat-item"><div class="stat-label">Cant. movimientos</div><div class="stat-value" id="st-cant">0</div></div>
+      <div class="stat-item"><div class="stat-label">Promedio diario</div><div class="stat-value" id="st-prom">$0</div></div>
+      <div class="stat-item"><div class="stat-label">Mayor retiro</div><div class="stat-value" id="st-max">$0</div></div>
+    </div>
+  </div>
+
+  <div class="export-card">
+    <div class="card-title">Descargar reporte</div>
+    <div class="date-range">
+      <div class="field" style="margin:0"><label>Desde</label><input type="date" id="exp-desde"></div>
+      <div class="field" style="margin:0"><label>Hasta</label><input type="date" id="exp-hasta"></div>
+    </div>
+    <div class="range-note" id="range-note">Seleccioná un período para el reporte</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+      <button class="filter-chip" onclick="setRango('semana')">Esta semana</button>
+      <button class="filter-chip" onclick="setRango('mes')">Este mes</button>
+      <button class="filter-chip" onclick="setRango('todo')">Todo</button>
+    </div>
+    <div class="export-grid">
+      <button class="btn-export" onclick="exportExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><path d="m7 13 2 3M13 13l-2 3"/></svg>
+        Descargar Excel
+      </button>
+      <button class="btn-export" onclick="exportPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+        Descargar PDF
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.875rem;flex-wrap:wrap;gap:8px;">
+      <div class="card-title" style="margin-bottom:0;">Movimientos registrados</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="filter-chip on" onclick="setFiltro(this,'todos')">Todos</button>
+        <button class="filter-chip" onclick="setFiltro(this,'efectivo')">Efectivo</button>
+        <button class="filter-chip" onclick="setFiltro(this,'transferencia')">Transfer.</button>
+        <button class="filter-chip" onclick="setFiltro(this,'mercadopago')">MP</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="mov-table">
+        <thead><tr><th>Fecha</th><th>Detalle</th><th>Método</th><th style="text-align:right">Monto</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="empty-msg" class="empty-state" style="display:none;">Sin movimientos registrados aún</div>
+  </div>
+
+</div>
+
+<footer>
+  <span>© Standard Finance S.A.S. — Todos los derechos reservados</span>
+  <span>CUIT: 33-71928936-9 &nbsp;|&nbsp; Mendoza, Argentina</span>
+</footer>
+
+<script>
+const STORAGE_KEY = 'gastos_adren_sf_v2';
+const catL = { retiro:'Retiro', hogar:'Hogar', educacion:'Educación', salud:'Salud', entretenimiento:'Entretenimiento', otro:'Otro' };
+const medL = { efectivo:'Efectivo', transferencia:'Transferencia', debito:'Débito', credito:'Crédito', mercadopago:'Mercado Pago', otro:'Otro' };
+const catSt = { retiro:'background:#FAECE7;color:#7A2E15', hogar:'background:#E6F1FB;color:#0C447C', educacion:'background:#EAF3DE;color:#27500A', salud:'background:#FAEEDA;color:#633806', entretenimiento:'background:#FBEAF0;color:#72243E', otro:'background:#F1EFE8;color:#444441' };
+const medSt = { efectivo:'background:#EAF3DE;color:#27500A', transferencia:'background:#E6F1FB;color:#0C447C', debito:'background:#EEEDFE;color:#3C3489', credito:'background:#FAEEDA;color:#633806', mercadopago:'background:#FBEAF0;color:#72243E', otro:'background:#F1EFE8;color:#444441' };
+const quienColor = { 'Álvaro':'#1D4E89', 'Dani':'#7B2D8B', 'Familia':'#1B6B3A' };
+const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let data = [];
+try { data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) {}
+let filtroMedio = 'todos';
+let filtroQuien = 'todos';
+
+function getMes() { const h = new Date(); return meses[h.getMonth()] + ' ' + h.getFullYear(); }
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) { alert('Error al guardar'); } }
+function hoy() { return new Date().toISOString().split('T')[0]; }
+
+document.getElementById('mes-label').textContent = getMes();
+document.getElementById('inp-fecha').value = hoy();
+document.getElementById('exp-desde').value = hoy().slice(0,7) + '-01';
+document.getElementById('exp-hasta').value = hoy();
+actualizarRangeNote();
+
+function agregar() {
+  const fecha = document.getElementById('inp-fecha').value;
+  const desc = document.getElementById('inp-desc').value.trim();
+  const monto = parseFloat(document.getElementById('inp-monto').value);
+  const cat = document.getElementById('inp-cat').value;
+  const quien = document.getElementById('inp-quien').value;
+  const medio = document.getElementById('inp-medio').value;
+  if (!fecha || !desc || !monto || monto <= 0) { alert('Completá todos los campos'); return; }
+  data.unshift({ id: Date.now(), fecha, desc, monto, cat, quien, medio });
+  save();
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-monto').value = '';
+  render();
+}
+
+function eliminar(id) {
+  if (!confirm('¿Eliminar este movimiento?')) return;
+  data = data.filter(m => m.id !== id);
+  save();
+  render();
+}
+
+function setQuien(q, btn) {
+  filtroQuien = q;
+  document.querySelectorAll('.quien-btn').forEach(b => b.className = 'quien-btn');
+  if (q==='todos') btn.classList.add('act-todos');
+  else if (q==='Álvaro') btn.classList.add('act-alvaro');
+  else if (q==='Dani') btn.classList.add('act-dani');
+  else btn.classList.add('act-familia');
+  render();
+}
+
+function setFiltro(btn, val) {
+  filtroMedio = val;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function setRango(tipo) {
+  const h = new Date();
+  let desde, hasta = hoy();
+  if (tipo === 'semana') {
+    const d = new Date(h);
+    d.setDate(h.getDate() - h.getDay() + 1);
+    desde = d.toISOString().split('T')[0];
+  } else if (tipo === 'mes') {
+    desde = hoy().slice(0,7) + '-01';
+  } else {
+    desde = data.length ? [...data].sort((a,b)=>a.fecha.localeCompare(b.fecha))[0].fecha : hoy().slice(0,7)+'-01';
+    hasta = hoy();
+  }
+  document.getElementById('exp-desde').value = desde;
+  document.getElementById('exp-hasta').value = hasta;
+  actualizarRangeNote();
+}
+
+document.getElementById('exp-desde').addEventListener('change', actualizarRangeNote);
+document.getElementById('exp-hasta').addEventListener('change', actualizarRangeNote);
+
+function actualizarRangeNote() {
+  const desde = document.getElementById('exp-desde').value;
+  const hasta = document.getElementById('exp-hasta').value;
+  const enRango = data.filter(m => m.fecha >= desde && m.fecha <= hasta);
+  const total = enRango.reduce((s,m) => s+m.monto, 0);
+  document.getElementById('range-note').textContent =
+    enRango.length ? `${enRango.length} movimientos · Total: ${fmt(total)}` : 'Sin movimientos en ese período';
+}
+
+function filtrados() {
+  return data.filter(m =>
+    (filtroMedio === 'todos' || m.medio === filtroMedio) &&
+    (filtroQuien === 'todos' || m.quien === filtroQuien)
+  );
+}
+
+function getRango() {
+  return {
+    desde: document.getElementById('exp-desde').value,
+    hasta: document.getElementById('exp-hasta').value
+  };
+}
+
+function datosParaExportar() {
+  const { desde, hasta } = getRango();
+  return data.filter(m => m.fecha >= desde && m.fecha <= hasta);
+}
+
+function render() {
+  const lista = filtrados();
+  const total = lista.reduce((s,m) => s+m.monto, 0);
+  const ef = lista.filter(m => m.medio === 'efectivo').reduce((s,m) => s+m.monto, 0);
+  document.getElementById('s-total').textContent = fmt(total);
+  document.getElementById('s-ef').textContent = fmt(ef);
+  document.getElementById('s-dig').textContent = fmt(total - ef);
+
+  const alv = data.filter(m => m.quien==='Álvaro').reduce((s,m) => s+m.monto, 0);
+  const dan = data.filter(m => m.quien==='Dani').reduce((s,m) => s+m.monto, 0);
+  const fam = data.filter(m => m.quien==='Familia').reduce((s,m) => s+m.monto, 0);
+  const max = data.length ? Math.max(...data.map(m => m.monto)) : 0;
+  const dias = data.length ? [...new Set(data.map(m => m.fecha))].length : 1;
+  const totalAll = data.reduce((s,m) => s+m.monto, 0);
+  document.getElementById('st-alvaro').textContent = fmt(alv);
+  document.getElementById('st-dani').textContent = fmt(dan);
+  document.getElementById('st-familia').textContent = fmt(fam);
+  document.getElementById('st-cant').textContent = data.length;
+  document.getElementById('st-prom').textContent = fmt(dias ? totalAll/dias : 0);
+  document.getElementById('st-max').textContent = fmt(max);
+
+  actualizarRangeNote();
+
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('empty-msg');
+  if (!lista.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = lista.map(m => `
+    <tr>
+      <td style="font-size:12px;color:#6B6860;white-space:nowrap;">${m.fecha.slice(5).replace('-','/')}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span class="quien-dot" style="background:${quienColor[m.quien]||'#888'}"></span>
+          <span style="font-size:13px;">${m.desc}</span>
+        </div>
+        <div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;">
+          <span style="font-size:11px;color:#9E9C96;">${m.quien}</span>
+          <span class="tag" style="${catSt[m.cat]}">${catL[m.cat]}</span>
+        </div>
+      </td>
+      <td><span class="tag" style="${medSt[m.medio]}">${medL[m.medio]}</span></td>
+      <td class="monto-cell">${fmt(m.monto)}</td>
+      <td><button class="btn-del" onclick="eliminar(${m.id})">×</button></td>
+    </tr>`).join('');
+}
+
+function getLabelRango() {
+  const { desde, hasta } = getRango();
+  return desde === hasta ? desde : `${desde} al ${hasta}`;
+}
+
+function exportExcel() {
+  const lista = datosParaExportar();
+  if (!lista.length) { alert('No hay movimientos en ese período'); return; }
+  const { desde, hasta } = getRango();
+  const total = lista.reduce((s,m) => s+m.monto, 0);
+  const ef = lista.filter(m => m.medio==='efectivo').reduce((s,m) => s+m.monto, 0);
+  const alv = lista.filter(m => m.quien==='Álvaro').reduce((s,m) => s+m.monto, 0);
+  const dan = lista.filter(m => m.quien==='Dani').reduce((s,m) => s+m.monto, 0);
+  const fam = lista.filter(m => m.quien==='Familia').reduce((s,m) => s+m.monto, 0);
+
+  const filas = [
+    ['GASTOS PERSONALES — ADRENALINA TALLES ESPECIALES'],
+    [`Período: ${getLabelRango()}`],
+    [`Generado: ${new Date().toLocaleDateString('es-AR')}`],
+    [],
+    ['Fecha', 'Quién', 'Descripción', 'Categoría', 'Método de retiro', 'Monto ($)'],
+    ...lista.map(m => [m.fecha, m.quien, m.desc, catL[m.cat], medL[m.medio], m.monto]),
+    [],
+    ['RESUMEN DEL PERÍODO'],
+    ['Álvaro', '', '', '', '', alv],
+    ['Dani', '', '', '', '', dan],
+    ['Familia', '', '', '', '', fam],
+    [],
+    ['', '', '', '', 'Total efectivo en caja', ef],
+    ['', '', '', '', 'Total medios digitales', total - ef],
+    ['', '', '', '', 'TOTAL GENERAL', total],
+    [],
+    ['Standard Finance S.A.S. — CUIT: 33-71928936-9 — Mendoza, Argentina'],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(filas);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:30},{wch:16},{wch:22},{wch:16}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
+  XLSX.writeFile(wb, `Gastos_${desde}_${hasta}.xlsx`);
+}
+
+function exportPDF() {
+  const lista = datosParaExportar();
+  if (!lista.length) { alert('No hay movimientos en ese período'); return; }
+  const total = lista.reduce((s,m) => s+m.monto, 0);
+  const ef = lista.filter(m => m.medio==='efectivo').reduce((s,m) => s+m.monto, 0);
+  const alv = lista.filter(m => m.quien==='Álvaro').reduce((s,m) => s+m.monto, 0);
+  const dan = lista.filter(m => m.quien==='Dani').reduce((s,m) => s+m.monto, 0);
+  const fam = lista.filter(m => m.quien==='Familia').reduce((s,m) => s+m.monto, 0);
+  const hoyStr = new Date().toLocaleDateString('es-AR');
+
+  const filas = lista.map(m => `
+    <tr>
+      <td>${m.fecha.slice(5).replace('-','/')}</td>
+      <td>${m.quien}</td>
+      <td>${m.desc}</td>
+      <td>${catL[m.cat]}</td>
+      <td>${medL[m.medio]}</td>
+      <td class="num">$${Math.round(m.monto).toLocaleString('es-AR')}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Reporte Gastos ${getLabelRango()}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1916;padding:2.5rem;max-width:800px;margin:0 auto;}
+    h1{font-size:20px;font-weight:700;margin-bottom:4px;}
+    .sub{color:#666;font-size:12px;margin-bottom:2px;}
+    .header-block{margin-bottom:2rem;}
+    table{width:100%;border-collapse:collapse;margin-bottom:2rem;}
+    th{background:#f4f3f0;text-align:left;padding:8px 10px;font-size:11px;font-weight:700;border-bottom:2px solid #ddd;text-transform:uppercase;letter-spacing:0.04em;}
+    td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:top;}
+    .num{text-align:right;font-family:monospace;font-weight:600;}
+    .resumen{margin-top:0.5rem;border-top:2px solid #1a1916;padding-top:1.25rem;}
+    .res-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:0.5px solid #eee;}
+    .res-total{font-weight:700;font-size:15px;border-top:1.5px solid #1a1916;border-bottom:none;padding-top:10px;margin-top:6px;}
+    .res-section{margin-bottom:1rem;}
+    .footer-pdf{margin-top:3rem;padding-top:1rem;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center;font-family:monospace;}
+    @media print{body{padding:1rem;}}
+  </style></head><body>
+  <div class="header-block">
+    <h1>Reporte de gastos personales</h1>
+    <div class="sub">Adrenalina Talles Especiales</div>
+    <div class="sub">Período: ${getLabelRango()}</div>
+    <div class="sub">Generado: ${hoyStr}</div>
+  </div>
+  <table>
+    <thead><tr><th>Fecha</th><th>Quién</th><th>Descripción</th><th>Categoría</th><th>Método</th><th style="text-align:right">Monto</th></tr></thead>
+    <tbody>${filas}</tbody>
+  </table>
+  <div class="resumen">
+    <div class="res-section">
+      <div class="res-row"><span>Álvaro</span><span class="num">$${Math.round(alv).toLocaleString('es-AR')}</span></div>
+      <div class="res-row"><span>Dani</span><span class="num">$${Math.round(dan).toLocaleString('es-AR')}</span></div>
+      <div class="res-row"><span>Familia</span><span class="num">$${Math.round(fam).toLocaleString('es-AR')}</span></div>
+    </div>
+    <div class="res-row"><span>Total efectivo en caja</span><span class="num">$${Math.round(ef).toLocaleString('es-AR')}</span></div>
+    <div class="res-row"><span>Total medios digitales</span><span class="num">$${Math.round(total-ef).toLocaleString('es-AR')}</span></div>
+    <div class="res-row res-total"><span>TOTAL GENERAL</span><span class="num">$${Math.round(total).toLocaleString('es-AR')}</span></div>
+  </div>
+  <div class="footer-pdf">© Standard Finance S.A.S. — CUIT: 33-71928936-9 — Mendoza, Argentina — Todos los derechos reservados</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Reporte_gastos_${desde}_${hasta}.html`.replace(/\s/g,'_');
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+render();
+</script>
+</body>
+</html>
